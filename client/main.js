@@ -16,10 +16,7 @@ Template.main.events({
   "submit .new-todo"(event) {
     let text = event.target.text.value;
 
-    Todos.insert({
-      text: text,
-      createdAt: new Date()
-    });
+    Meteor.call('addTodo', text);
 
     // Clear Form
     event.target.text.value = '';
@@ -28,11 +25,36 @@ Template.main.events({
     return false;
   },
   "click .toggle-checked"() {
-    Todos.update(this._id, {$set:{checked: ! this.checked}});
+    Meteor.call('setChecked', this._id, !this.checked);
   },
   "click .delete-todo"() {
     if(confirm('Are You Sure?')) {
-      Todos.remove(this._id);
+      Meteor.call('deleteTodo', this._id);
     }
   }
 });
+
+Accounts.ui.config({
+  passwordSignupFields: "USERNAME_ONLY"
+})
+
+// Meteor Methods
+Meteor.methods({
+  addTodo(text) {
+    if(!Meteor.userId()) {
+      throw new Meteor.Error('not-authorized');
+    }
+    Todos.insert({
+      text: text,
+      createdAt: new Date(),
+      userId: Meteor.userId(),
+      username: Meteor.user().username
+    });
+  },
+  deleteTodo(todoId) {
+    Todos.remove(todoId);
+  },
+  setChecked(todoId, setChecked) {
+    Todos.update(todoId, {$set:{checked: setChecked}});
+  }
+})
