@@ -5,6 +5,8 @@ import './main.html';
 
 Todos = new Mongo.Collection('todos');
 
+Meteor.subscribe('todos');
+
 // Template Helpers
 Template.main.helpers({
   todos() {
@@ -52,9 +54,16 @@ Meteor.methods({
     });
   },
   deleteTodo(todoId) {
-    Todos.remove(todoId);
+    let todo = Todos.findOne(todoId);
+    if(todo.userId !== Meteor.userId()) {
+      Todos.remove(todoId);
+    }
   },
   setChecked(todoId, setChecked) {
+    let todo = Todos.findOne(todoId);
+    if(todo.userId !== Meteor.userId()) {
+      throw new Meteor.Error('not-authorized');
+    }
     Todos.update(todoId, {$set:{checked: setChecked}});
   }
 })
